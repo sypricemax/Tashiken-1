@@ -63,7 +63,7 @@ const BELT_REQUIREMENTS = {
     kyu: '1st',
     kata: ['Requirements to be confirmed'],
     combinations: ['Requirements to be confirmed'],
-    kicks: ['Requirements to be confirmed'],
+    kicks: ['2x Jump Kicks (TOBI GERI)', 'Spinning Hook Kick (URAMAE GERI)'],
     videoUrl: 'https://youtu.be/1806Qfpx0Rk?si=wutvSJOmJec4aTao'
   }
 };
