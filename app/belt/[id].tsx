@@ -65,6 +65,13 @@ const BELT_REQUIREMENTS = {
     combinations: ['Requirements to be confirmed'],
     kicks: ['2x Jump Kicks (TOBI GERI)', 'Spinning Hook Kick (URAMAE GERI)'],
     videoUrl: 'https://youtu.be/1806Qfpx0Rk?si=wutvSJOmJec4aTao'
+  },
+  black: {
+    kyu: '1st Dan',
+    kata: ['SEIENCHIN', 'SEIPAI', 'JUROKU'],
+    combinations: ['All Previous Combinations', 'Advanced Combinations 1-5'],
+    kicks: ['All Previous Kicks', 'Flying Kicks', 'Combination Kicks'],
+    videoUrl: 'https://youtu.be/SCdzlt4oGzw?si=XxzFq3AMgplPwKit'
   }
 };
 
@@ -129,9 +136,9 @@ export default function BeltDetailsScreen() {
         <Text 
           style={styles.header}
           accessible={true}
-          accessibilityLabel={`${requirements.kyu} Kyu Requirements`}
+          accessibilityLabel={`${requirements.kyu} Requirements`}
         >
-          {requirements.kyu} Kyu Requirements
+          {requirements.kyu} Requirements
         </Text>
         
         <Pressable 
@@ -199,7 +206,7 @@ export default function BeltDetailsScreen() {
                 accessible={true}
                 accessibilityLabel={`Combination ${combo}`}
               >
-                <Text style={styles.comboText}>#{combo}</Text>
+                <Text style={styles.comboText}>{combo}</Text>
               </View>
             ))}
           </View>

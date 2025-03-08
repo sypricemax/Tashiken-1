@@ -11,7 +11,8 @@ const BELT_GRADES = [
   { id: 'purple', name: '4th Kyu – Purple Belt', color: '#800080' },
   { id: 'brown1', name: '3rd Kyu – Brown Belt (1 stripe)', color: '#A0522D' },
   { id: 'brown2', name: '2nd Kyu – Brown Belt (2 stripes)', color: '#8B4513' },
-  { id: 'brown3', name: '1st Kyu – Brown Belt (3 stripes)', color: '#654321' }
+  { id: 'brown3', name: '1st Kyu – Brown Belt (3 stripes)', color: '#654321' },
+  { id: 'black', name: '1st Dan – Black Belt', color: '#000000' }
 ];
 
 export default function BeltGradesScreen() {
