@@ -1,26 +1,43 @@
 {
   "cli": {
-    "version": ">=7.3.0",
-    "appVersionSource": "remote"
+    "version": ">=15.0.15",
+    "appVersionSource": "remote",
+    "requireCommit": false
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "android": {
-        "gradleCommand": ":app:assembleDebug"
+        "gradleCommand": ":app:assembleDebug",
+        "buildType": "apk",
+        "withoutCredentials": true
+      },
+      "env": {
+        "ANDROID_SDK_ROOT": "/opt/android/sdk",
+        "EAS_NO_VCS": "1"
+      },
+      "cache": {
+        "key": "eas-build-development-android"
       }
     },
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "withoutCredentials": true
+      },
+      "env": {
+        "EAS_NO_VCS": "1"
       }
     },
     "production": {
       "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "EAS_NO_VCS": "1"
       }
     }
   },
