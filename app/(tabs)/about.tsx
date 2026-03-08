@@ -1,152 +1,181 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, ImageBackground } from 'react-native';
+import { useState, useEffect } from 'react';
+import { supabase, ClubInfo } from '@/lib/supabase';
+import { InfoSection } from '@/components/InfoSection';
+import { Clock, MapPin, User, Phone, FileText } from 'lucide-react-native';
+import Header from '@/components/Header';
 
-const GLOSSARY_SECTIONS = {
-  dojo: {
-    title: 'Basic Dojo Terminology',
-    terms: [
-      { term: 'DOJO', definition: 'Training hall' },
-      { term: 'SENSEI', definition: 'Teacher (usually for black belts)' },
-      { term: 'SEMPAI', definition: 'Senior student' },
-      { term: 'REI', definition: 'Bow' },
-      { term: 'OSU', definition: 'A respectful acknowledgment (yes, understood, etc.)' },
-      { term: 'KIAI', definition: 'Spirit shout used to generate power' },
-      { term: 'GI', definition: 'Karate uniform' },
-      { term: 'OBI', definition: 'Belt' },
-      { term: 'KUMITE', definition: 'Sparring' },
-      { term: 'KATA', definition: 'Pre-arranged sequence of movements' },
-      { term: 'BUNKAI', definition: 'Application of kata techniques' },
-      { term: 'KIME', definition: 'Focus or finishing energy in a technique' },
-    ],
-  },
-  stances: {
-    title: 'Shukokai Stances (DACHI)',
-    terms: [
-      { term: 'HEIKO DACHI', definition: 'Parallel stance' },
-      { term: 'MUSUBI DACHI', definition: 'Attention stance (heels together, feet apart)' },
-      { term: 'ZANSHIN DACHI', definition: 'Ready stance' },
-      { term: 'SHIKO DACHI', definition: 'Horse stance (wide-legged stance)' },
-      { term: 'ZUKI DACHI', definition: 'Punching stance' },
-      { term: 'ZENKUTSU DACHI', definition: 'Front stance' },
-      { term: 'NEKO ASHI DACHI', definition: 'Cat stance (weight mostly on back leg)' },
-      { term: 'KOKUTSU DACHI', definition: 'Back stance' },
-      { term: 'SANCHIN DACHI', definition: 'Hourglass stance' },
-    ],
-  },
-  punching: {
-    title: 'Punching Techniques (ZUKI/WAZA)',
-    terms: [
-      { term: 'OI ZUKI', definition: 'Lunge punch' },
-      { term: 'GYAKU ZUKI', definition: 'Reverse punch' },
-      { term: 'KIZAMI ZUKI', definition: 'Jab punch' },
-      { term: 'TATE ZUKI', definition: 'Vertical fist punch' },
-      { term: 'URA ZUKI', definition: 'Uppercut punch' },
-      { term: 'MOROTE ZUKI', definition: 'Double punch' },
-      { term: 'AGE ZUKI', definition: 'Rising punch' },
-      { term: 'SHUTO UCHI', definition: 'Knife-hand strike' },
-      { term: 'URAKEN UCHI', definition: 'Back-fist strike' },
-      { term: 'EMPI UCHI', definition: 'Elbow strike' },
-    ],
-  },
-  kicking: {
-    title: 'Kicking Techniques (GERI)',
-    terms: [
-      { term: 'MAE GERI', definition: 'Front kick' },
-      { term: 'MAWASHI GERI', definition: 'Roundhouse kick' },
-      { term: 'YOKO GERI', definition: 'Side kick' },
-      { term: 'URA MAWASHI GERI', definition: 'Hook kick' },
-      { term: 'USHIRO GERI', definition: 'Spinning back kick' },
-      { term: 'TOBI GERI', definition: 'Jump kick' },
-      { term: 'KEAGE', definition: 'Snap kick' },
-      { term: 'KEKOMI', definition: 'Thrust kick' },
-    ],
-  },
-  blocking: {
-    title: 'Blocking Techniques (UKE WAZA)',
-    terms: [
-      { term: 'AGE UKE', definition: 'Rising block (forearm block against high attacks)' },
-      { term: 'GEDAN BARAI', definition: 'Downward block (low sweeping block)' },
-      { term: 'UCHI UKE', definition: 'Inside block (deflects attacks coming from the side)' },
-      { term: 'SOTO UKE', definition: 'Outside block (blocks attacks moving inward)' },
-      { term: 'SHUTO UKE', definition: 'Knife-hand block' },
-      { term: 'MOROTE UKE', definition: 'Reinforced block (using both hands for added strength)' },
-      { term: 'JUJI UKE', definition: 'X-block (crossed-arm block for high or low attacks)' },
-      { term: 'OTOSHI UKE', definition: 'Dropping block (used to stop downward strikes)' },
-    ],
-  },
-};
+export default function ClubInfoScreen() {
+  const [clubInfo, setClubInfo] = useState<ClubInfo | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export default function GlossaryScreen() {
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.header}>Shukokai Karate Glossary</Text>
-        
-        {Object.values(GLOSSARY_SECTIONS).map((section, index) => (
-          <View key={index} style={styles.section}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            {section.terms.map((item, termIndex) => (
-              <View key={termIndex} style={styles.termContainer}>
-                <Text style={styles.term}>{item.term}</Text>
-                <Text style={styles.definition}>{item.definition}</Text>
-              </View>
-            ))}
-          </View>
-        ))}
+  useEffect(() => {
+    loadClubInfo();
+  }, []);
+
+  const loadClubInfo = async () => {
+    setLoading(true);
+
+    const { data } = await supabase
+      .from('club_info')
+      .select('*')
+      .maybeSingle();
+
+    if (data) {
+      setClubInfo(data);
+    }
+
+    setLoading(false);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#EF4444" />
       </View>
-    </ScrollView>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <ImageBackground
+        source={require('@/assets/images/SampleBG.png')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+        imageStyle={styles.backgroundImageStyle}
+      >
+        <Header />
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Tashiken Karate Club</Text>
+            <Text style={styles.subtitle}>
+              Everything you need to know about training with us
+            </Text>
+          </View>
+
+          {clubInfo?.general_guidance && (
+            <View style={styles.guidanceContainer}>
+              <InfoSection
+                icon={FileText}
+                title="General Guidance"
+                content={clubInfo.general_guidance}
+                iconColor="#EF4444"
+              />
+            </View>
+          )}
+
+      <View style={styles.content}>
+        {clubInfo?.training_times && (
+          <InfoSection
+            icon={Clock}
+            title="Training Times"
+            content={clubInfo.training_times || 'Training times to be announced'}
+            iconColor="#EF4444"
+          />
+        )}
+
+        {clubInfo?.venue && (
+          <InfoSection
+            icon={MapPin}
+            title="Venue"
+            content={clubInfo.venue || 'Venue information to be announced'}
+            iconColor="#3B82F6"
+          />
+        )}
+
+        {clubInfo?.instructor_details && (
+          <InfoSection
+            icon={User}
+            title="Instructors"
+            content={clubInfo.instructor_details || 'Instructor details to be announced'}
+            iconColor="#EF4444"
+          />
+        )}
+
+        {clubInfo?.contact_info && (
+          <InfoSection
+            icon={Phone}
+            title="Contact Us"
+            content={clubInfo.contact_info || 'Contact information to be announced'}
+            iconColor="#3B82F6"
+          />
+        )}
+
+        {!clubInfo && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Club information will be available soon</Text>
+            <Text style={styles.emptySubtext}>Please check back later</Text>
+          </View>
+        )}
+      </View>
+        </ScrollView>
+      </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1FAEE',
+    backgroundColor: '#FFFFFF',
   },
-  content: {
-    padding: 16,
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  backgroundImageStyle: {
+    opacity: 0.6,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
   },
   header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#1D3557',
+    paddingTop: 20,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
     textAlign: 'center',
   },
-  section: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  subtitle: {
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
+    textAlign: 'center',
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#E63946',
-  },
-  termContainer: {
+  guidanceContainer: {
+    paddingHorizontal: 0,
     marginBottom: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1FAEE',
   },
-  term: {
-    fontSize: 16,
+  content: {
+    paddingVertical: 16,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 48,
+  },
+  emptyText: {
+    fontSize: 18,
     fontWeight: '600',
-    color: '#1D3557',
-    marginBottom: 4,
+    color: '#666',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  definition: {
+  emptySubtext: {
     fontSize: 14,
-    color: '#457B9D',
-    lineHeight: 20,
+    color: '#999',
+    textAlign: 'center',
   },
 });

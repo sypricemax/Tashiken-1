@@ -1,372 +1,324 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, Linking, AccessibilityInfo, Platform } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, ActivityIndicator, ImageBackground } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
+import { supabase, Belt, Syllabus, Video } from '@/lib/supabase';
+import { VideoCard } from '@/components/VideoCard';
+import { InfoSection } from '@/components/InfoSection';
+import { BookOpen, Zap, Move, Shield, Hand, X, Youtube, ArrowLeft } from 'lucide-react-native';
+import Header from '@/components/Header';
 
-const BELT_REQUIREMENTS = {
-  white: {
-    kyu: '9th',
-    kata: ['SHI-ZUKI 1'],
-    combinations: ['1', '2'],
-    kicks: ['Front Kick (MAE GERI)'],
-    videoUrl: 'https://youtu.be/VB-GXt0pQSA?si=FahWsN_H33G2nDbd'
-  },
-  yellow: {
-    kyu: '8th',
-    kata: ['PINAN SHODAN'],
-    combinations: ['1', '2', '3a'],
-    kicks: ['Roundhouse (MAWASHI GERI)'],
-    videoUrl: 'https://youtu.be/-3hwVkBeNrE?si=MIWxmzdpKFltxGAo'
-  },
-  orange: {
-    kyu: '7th',
-    kata: ['PINAN NIDAN'],
-    combinations: ['1', '2', '3a', '3b', '4a'],
-    kicks: ['Half-step Hook Kick (URA MAWASHI GERI)'],
-    videoUrl: 'https://youtu.be/xnDbSXLn_p0?si=YrFhma7FR-0Gys84'
-  },
-  green: {
-    kyu: '6th',
-    kata: ['PINAN SANDAN'],
-    combinations: ['1', '2', '3a', '3b', '4a', '4b', '5', '6'],
-    kicks: ['Spinning Back Kick (USHIRO GERI)'],
-    videoUrl: 'https://youtu.be/keCNTbGTON4?si=C7ukY-Mg1UPe-3CZ'
-  },
-  blue: {
-    kyu: '5th',
-    kata: ['PINAN YONDAN', 'PINAN GODAN'],
-    combinations: ['1', '2', '3', '4', '5', '6', '7'],
-    kicks: ['Half-Step Hook Kick (URA MAWASHI GERI)'],
-    videoUrl: 'https://youtu.be/_8TV9YM_rYU?si=dcZcPuoUxajEwUSQ'
-  },
-  purple: {
-    kyu: '4th',
-    kata: ['ANANANKU', 'MATSUKAZI'],
-    combinations: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
-    kicks: ['Spinning Hook Kick (URAMAE GERI)'],
-    videoUrl: 'https://youtu.be/SCdzlt4oGzw?si=XxzFq3AMgplPwKit'
-  },
-  brown1: {
-    kyu: '3rd',
-    kata: ['JI-IN', 'ROHI'],
-    combinations: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
-    kicks: ['Spinning Hook Kick', 'Jump Kick (TOBI GERI)'],
-    videoUrl: 'https://youtu.be/6znHzBBeUhs?si=mxKuf6wfjkGLoO4h'
-  },
-  brown2: {
-    kyu: '2nd',
-    kata: ['BASSAI DAI', 'NISEISHI'],
-    combinations: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
-    kicks: ['Spinning Hook Kick', 'Jump Kick (TOBI GERI)'],
-    videoUrl: 'https://youtu.be/1806Qfpx0Rk?si=wutvSJOmJec4aTao'
-  },
-  brown3: {
-    kyu: '1st',
-    kata: ['Requirements to be confirmed'],
-    combinations: ['Requirements to be confirmed'],
-    kicks: ['2x Jump Kicks (TOBI GERI)', 'Spinning Hook Kick (URAMAE GERI)'],
-    videoUrl: 'https://youtu.be/1806Qfpx0Rk?si=wutvSJOmJec4aTao'
-  },
-  black: {
-    kyu: '1st Dan',
-    kata: ['SEIENCHIN', 'SEIPAI', 'JUROKU'],
-    combinations: ['All Previous Combinations', 'Advanced Combinations 1-5'],
-    kicks: ['All Previous Kicks', 'Flying Kicks', 'Combination Kicks'],
-    videoUrl: 'https://youtu.be/SCdzlt4oGzw?si=XxzFq3AMgplPwKit'
-  }
-};
-
-export default function BeltDetailsScreen() {
+export default function BeltDetailScreen() {
   const { id } = useLocalSearchParams();
-  const beltId = id?.toString().toLowerCase() as keyof typeof BELT_REQUIREMENTS;
-  const requirements = BELT_REQUIREMENTS[beltId];
-  
-  if (!requirements) {
-    const errorMessage = 'Belt requirements not found';
-    if (Platform.OS === 'web') {
-      const element = document.createElement('div');
-      element.setAttribute('role', 'alert');
-      element.textContent = errorMessage;
-      document.body.appendChild(element);
-      setTimeout(() => document.body.removeChild(element), 3000);
-    } else {
-      AccessibilityInfo.announceForAccessibility(errorMessage);
+  const router = useRouter();
+  const [belt, setBelt] = useState<Belt | null>(null);
+  const [syllabus, setSyllabus] = useState<Syllabus | null>(null);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadBeltDetails();
+  }, [id]);
+
+  const loadBeltDetails = async () => {
+    setLoading(true);
+
+    const { data: beltData } = await supabase
+      .from('belts')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (beltData) {
+      setBelt(beltData);
+
+      const { data: syllabusData } = await supabase
+        .from('syllabus')
+        .select('*')
+        .eq('belt_id', id)
+        .maybeSingle();
+
+      if (syllabusData) {
+        setSyllabus(syllabusData);
+      }
+
+      const { data: videosData } = await supabase
+        .from('videos')
+        .select('*')
+        .eq('belt_id', id)
+        .order('order', { ascending: true });
+
+      if (videosData) {
+        setVideos(videosData);
+      }
     }
-    
+
+    setLoading(false);
+  };
+
+  if (loading) {
     return (
-      <View 
-        style={styles.container}
-        accessible={true}
-      >
-        <Text style={styles.errorText}>{errorMessage}</Text>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#EF4444" />
       </View>
     );
   }
 
-  const handleVideoPress = async () => {
-    if (requirements.videoUrl) {
-      try {
-        const canOpen = await Linking.canOpenURL(requirements.videoUrl);
-        if (canOpen) {
-          await Linking.openURL(requirements.videoUrl);
-        } else {
-          const message = 'Unable to open video link';
-          if (Platform.OS === 'web') {
-            const element = document.createElement('div');
-            element.setAttribute('role', 'alert');
-            element.textContent = message;
-            document.body.appendChild(element);
-            setTimeout(() => document.body.removeChild(element), 3000);
-          } else {
-            AccessibilityInfo.announceForAccessibility(message);
-          }
-        }
-      } catch (error) {
-        console.error('Error opening video:', error);
-      }
-    }
-  };
+  if (!belt) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Belt not found</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView 
-      style={styles.container}
-      accessible={true}
-      accessibilityLabel={`${requirements.kyu} Kyu Belt Requirements`}
-    >
-      <View style={styles.content}>
-        <Text 
-          style={styles.header}
-          accessible={true}
-          accessibilityLabel={`${requirements.kyu} Requirements`}
-        >
-          {requirements.kyu} Requirements
-        </Text>
-        
-        <Pressable 
-          onPress={handleVideoPress} 
-          style={styles.videoSection}
-          accessible={true}
-          accessibilityRole="button"
-          accessibilityLabel="Watch tutorial video"
-          accessibilityHint="Opens YouTube to watch the belt requirement tutorial"
-        >
-          <View style={styles.videoButton}>
-            <Ionicons name="logo-youtube" size={24} color="#E63946" />
-            <Text style={styles.videoButtonText}>Watch Tutorial Video</Text>
-          </View>
-        </Pressable>
-
-        <View 
-          style={styles.section}
-          accessible={true}
-          accessibilityLabel="Kata requirements"
-        >
-          <Text 
-            style={styles.sectionTitle}
-            accessible={true}
-            accessibilityLabel="Kata"
-          >
-            Kata
-          </Text>
-          {requirements.kata.map((kata, index) => (
-            <View 
-              key={index} 
-              style={styles.requirement}
-              accessible={true}
-              accessibilityLabel={kata}
+    <View style={styles.container}>
+      <ImageBackground
+        source={require('@/assets/images/SampleBG.png')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+        imageStyle={styles.backgroundImageStyle}
+      >
+        <Header />
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.headerSection}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+              activeOpacity={0.7}
             >
-              <View style={styles.bullet} />
-              <Text 
-                style={[styles.text, styles.kataText]} 
-                numberOfLines={1} 
-                ellipsizeMode="tail"
-              >
-                {kata}
-              </Text>
+              <ArrowLeft size={24} color="#1F2937" />
+            </TouchableOpacity>
+            <View style={styles.beltTitleContainer}>
+              <View style={[styles.beltColorIndicator, { backgroundColor: belt.color_hex }]} />
+              <Text style={styles.beltName}>{belt.name}</Text>
             </View>
-          ))}
-        </View>
-
-        <View 
-          style={styles.section}
-          accessible={true}
-          accessibilityLabel="Combinations requirements"
-        >
-          <Text 
-            style={styles.sectionTitle}
-            accessible={true}
-            accessibilityLabel="Combinations"
-          >
-            Combinations
-          </Text>
-          <View style={styles.gridContainer}>
-            {requirements.combinations.map((combo, index) => (
-              <View 
-                key={index} 
-                style={styles.gridItem}
-                accessible={true}
-                accessibilityLabel={`Combination ${combo}`}
-              >
-                <Text style={styles.comboText}>{combo}</Text>
-              </View>
-            ))}
           </View>
-        </View>
 
-        <View 
-          style={styles.section}
-          accessible={true}
-          accessibilityLabel="Kicks requirements"
-        >
-          <Text 
-            style={styles.sectionTitle}
-            accessible={true}
-            accessibilityLabel="Kicks"
-          >
-            Kicks
-          </Text>
-          {requirements.kicks.map((kick, index) => (
-            <View 
-              key={index} 
-              style={styles.requirement}
-              accessible={true}
-              accessibilityLabel={kick}
-            >
-              <View style={styles.bullet} />
-              <Text 
-                style={[styles.text, styles.kickText]} 
-                numberOfLines={1} 
-                ellipsizeMode="tail"
+          {belt.youtube_url && (
+            <View style={styles.youtubeButtonContainer}>
+              <TouchableOpacity
+                style={styles.youtubeButton}
+                onPress={() => Linking.openURL(belt.youtube_url!)}
+                activeOpacity={0.8}
               >
-                {kick}
-              </Text>
+                <Youtube size={24} color="#FFFFFF" />
+                <Text style={styles.youtubeButtonText}>Watch Sensei's Belt Requirements Video</Text>
+              </TouchableOpacity>
             </View>
-          ))}
-        </View>
-      </View>
-    </ScrollView>
+          )}
+
+          {syllabus && (
+            <View style={styles.content}>
+              <Text style={styles.sectionTitle}>Grading Requirements</Text>
+
+              {syllabus.kata && (
+                <InfoSection
+                  icon={BookOpen}
+                  title="Kata"
+                  content={syllabus.kata || 'No kata requirement specified'}
+                  iconColor="#EF4444"
+                />
+              )}
+
+              {syllabus.combination && (
+                <InfoSection
+                  icon={Zap}
+                  title="Combinations"
+                  content={syllabus.combination || 'No combination requirement specified'}
+                  iconColor="#3B82F6"
+                />
+              )}
+
+              {syllabus.kick && (
+                <InfoSection
+                  icon={Move}
+                  title="Kicks"
+                  content={syllabus.kick || 'No kick requirement specified'}
+                  iconColor="#EF4444"
+                />
+              )}
+
+              {syllabus.stance && (
+                <InfoSection
+                  icon={Shield}
+                  title="Stances"
+                  content={syllabus.stance || 'No stance requirement specified'}
+                  iconColor="#3B82F6"
+                />
+              )}
+
+              {syllabus.punch && (
+                <InfoSection
+                  icon={Hand}
+                  title="Punches"
+                  content={syllabus.punch || 'No punch requirement specified'}
+                  iconColor="#EF4444"
+                />
+              )}
+
+              {syllabus.blocking && (
+                <InfoSection
+                  icon={X}
+                  title="Blocking"
+                  content={syllabus.blocking || 'No blocking requirement specified'}
+                  iconColor="#3B82F6"
+                />
+              )}
+
+              {syllabus.notes && (
+                <View style={styles.notesSection}>
+                  <Text style={styles.notesTitle}>Additional Notes</Text>
+                  <Text style={styles.notesText}>{syllabus.notes}</Text>
+                </View>
+              )}
+
+              {videos.length > 0 && (
+                <>
+                  <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Training Videos</Text>
+                  {videos.map((video) => (
+                    <VideoCard key={video.id} video={video} />
+                  ))}
+                </>
+              )}
+            </View>
+          )}
+        </ScrollView>
+      </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1FAEE',
+    backgroundColor: '#FFFFFF',
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  backgroundImageStyle: {
+    opacity: 0.6,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#666',
+  },
+  headerSection: {
+    paddingTop: 20,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    position: 'relative',
+  },
+  backButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 50,
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  beltTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  beltColorIndicator: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  beltName: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1F2937',
+    textAlign: 'center',
   },
   content: {
     padding: 16,
   },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#1D3557',
-    textAlign: 'center',
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 16,
+    marginTop: 8,
   },
-  section: {
-    backgroundColor: '#fff',
+  notesSection: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 10,
-    marginBottom: 16,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#fbbf24',
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
   },
-  videoSection: {
-    marginBottom: 16,
+  notesTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
   },
-  videoButton: {
-    backgroundColor: '#fff',
+  notesText: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+  },
+  youtubeButtonContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  youtubeButton: {
+    backgroundColor: '#EF4444',
+    borderRadius: 12,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    borderRadius: 10,
+    gap: 12,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    gap: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
-  videoButtonText: {
+  youtubeButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-    color: '#1D3557',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#E63946',
-  },
-  requirement: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  bullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#457B9D',
-    marginRight: 8,
-  },
-  text: {
-    fontSize: 16,
-    color: '#457B9D',
-    lineHeight: 24,
-  },
-  kataText: {
-    fontWeight: '500',
-    ...Platform.select({
-      ios: {
-        fontFamily: 'System',
-      },
-      android: {
-        fontFamily: 'sans-serif-medium',
-      },
-    }),
-  },
-  kickText: {
-    ...Platform.select({
-      ios: {
-        fontFamily: 'System',
-      },
-      android: {
-        fontFamily: 'sans-serif',
-      },
-    }),
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  gridItem: {
-    backgroundColor: '#F1FAEE',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#457B9D',
-  },
-  comboText: {
-    fontSize: 14,
-    color: '#1D3557',
-    fontWeight: '500',
-  },
-  errorText: {
-    fontSize: 18,
-    color: '#E63946',
-    textAlign: 'center',
-    marginTop: 20,
   },
 });
