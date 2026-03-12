@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Karate Club",
-    "slug": "tashiken-karate",
+    "slug": "karate-club",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
