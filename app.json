@@ -2,7 +2,7 @@
   "expo": {
     "name": "Karate Club",
     "slug": "karate-club",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
@@ -29,6 +29,7 @@
         "backgroundColor": "#EF4444"
       },
       "package": "com.karateclub.app",
+	   "versionCode": 5,
       "intentFilters": [
         {
           "action": "VIEW",
