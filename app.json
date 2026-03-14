@@ -28,8 +28,8 @@
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#EF4444"
       },
-      "package": "com.karateclub.app",
-	   "versionCode": 5,
+      "package": "com.tashiken.karate",
+	   "versionCode": 6,
       "intentFilters": [
         {
           "action": "VIEW",

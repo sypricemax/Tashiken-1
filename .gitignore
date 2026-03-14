@@ -12,6 +12,9 @@ web-build/
 .DS_Store
 .env
 .env.*
+credentials.json
+credentials/
+*.jks
 
 # Native folders when using CNG/Prebuild
 /android
