@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, Linking } from 'react-native';
 import { router } from 'expo-router';
-import { BookOpen, Info, Facebook, Instagram, Youtube } from 'lucide-react-native';
+import { BookOpen, Info, BookText, Facebook, Instagram, Youtube } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { supabase, ClubInfo } from '@/lib/supabase';
 import Header from '@/components/Header';
@@ -83,6 +83,17 @@ export default function HomeScreen() {
                 <Info size={24} color="#3B82F6" />
               </View>
               <Text style={styles.navTitle}>Club Info</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navCard}
+              onPress={() => router.push('/(tabs)/glossary')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.navIconContainer, { backgroundColor: '#10B98120' }]}>
+                <BookText size={24} color="#10B981" />
+              </View>
+              <Text style={styles.navTitle}>Glossary</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

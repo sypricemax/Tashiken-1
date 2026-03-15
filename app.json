@@ -16,7 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.karateclub.app",
+      "bundleIdentifier": "com.tashiken.karate",
       "infoPlist": {
         "LSApplicationQueriesSchemes": [
           "youtube"
@@ -29,7 +29,7 @@
         "backgroundColor": "#EF4444"
       },
       "package": "com.tashiken.karate",
-	   "versionCode": 6,
+	  "versionCode": 7,
       "intentFilters": [
         {
           "action": "VIEW",
