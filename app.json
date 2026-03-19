@@ -29,7 +29,7 @@
         "backgroundColor": "#EF4444"
       },
       "package": "com.tashiken.karate",
-	  "versionCode": 7,
+      "versionCode": 7,
       "intentFilters": [
         {
           "action": "VIEW",
@@ -58,8 +58,20 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
-    ],
+  "expo-router",
+  [
+    "expo-build-properties",
+    {
+      "android": {
+        "compileSdkVersion": 35,
+        "targetSdkVersion": 35,
+        "buildToolsVersion": "35.0.0"
+      }
+    }
+  ]
+],
+	
+	
     "experiments": {
       "typedRoutes": true,
       "tsconfigPaths": true
